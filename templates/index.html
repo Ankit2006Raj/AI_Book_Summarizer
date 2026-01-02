@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📚 AI Book Summarizer - Ultimate Edition</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- WordCloud2.js -->
+    <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.2.2/src/wordcloud2.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .dark-mode {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #131829;
+            --bg-tertiary: #1e2538;
+            --text-primary: #f0f6ff;
+            --text-secondary: #a8c5e6;
+            --accent: #3b82f6;
+            --accent-light: #8b5cf6;
+            --accent-hover: #60a5fa;
+            --gradient-1: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            --gradient-2: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            --gradient-3: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            --shadow: 0 20px 60px rgba(59, 130, 246, 0.5);
+            --border-color: rgba(59, 130, 246, 0.5);
+            --hover-bg: rgba(59, 130, 246, 0.2);
+            --card-bg: #151b2e;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        .light-mode {
+            --bg-primary: #faf5ff;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f3e8ff;
+            --text-primary: #1e1b4b;
+            --text-secondary: #4c1d95;
+            --accent: #7c3aed;
+            --accent-light: #a855f7;
+            --accent-hover: #9333ea;
+            --gradient-1: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+            --gradient-2: linear-gradient(135deg, #a855f7 0%, #f97316 100%);
+            --gradient-3: linear-gradient(135deg, #ec4899 0%, #fbbf24 100%);
+            --shadow: 0 10px 40px rgba(124, 58, 237, 0.25);
+            --border-color: rgba(124, 58, 237, 0.4);
+            --hover-bg: rgba(124, 58, 237, 0.12);
+            --card-bg: #ffffff;
+            --success: #059669;
+            --error: #dc2626;
+            --warning: #d97706;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(91, 124, 255, 0.12) 0%, transparent 50%);
+            animation: rotateBackground 30s linear infinite;
+            z-index: -1;
+        }
+
+        .light-mode body::before {
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.08) 0%, transparent 50%);
+        }
+
+        @keyframes rotateBackground {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Floating particles */
+        .particle {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0.6;
+            animation: float 15s infinite;
+            z-index: 0;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0) translateX(0) rotate(0deg);
+            }
+
+            25% {
+                transform: translateY(-100px) translateX(50px) rotate(90deg);
+            }
+
+            50% {
+                transform: translateY(-50px) translateX(-50px) rotate(180deg);
+            }
+
+            75% {
+                transform: translateY(-150px) translateX(100px) rotate(270deg);
+            }
+        }
+
+        .btn-primary {
+            background: var(--gradient-1);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.6);
+        }
+
+        .dark-mode .btn-primary {
+            box-shadow: 0 12px 36px rgba(99, 102, 241, 0.7), 0 0 0 1px rgba(168, 85, 247, 0.5);
+        }
+
+        .light-mode .btn-primary {
+            box-shadow: 0 8px 28px rgba(99, 102, 241, 0.5), 0 0 0 1px rgba(99, 102, 241, 0.2);
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn-primary:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .dark-mode .btn-primary:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 20px 48px rgba(99, 102, 241, 0.8), 0 0 0 2px rgba(168, 85, 247, 0.6);
+        }
+
+        .light-mode .btn-primary:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 16px 40px rgba(99, 102, 241, 0.6), 0 0 0 2px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(-1px) scale(1.02);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dark-mode .card {
+            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3), 0 0 0 1px rgba(168, 85, 247, 0.2);
+        }
+
+        .light-mode .card {
+            box-shadow: 0 4px 24px rgba(99, 102, 241, 0.12), 0 0 0 1px rgba(99, 102, 241, 0.1);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .card:hover::before {
+            left: 100%;
+        }
+
+        .dark-mode .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 25px 60px rgba(99, 102, 241, 0.6), 0 0 0 2px rgba(168, 85, 247, 0.4);
+            border-color: var(--accent);
+        }
+
+        .light-mode .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(99, 102, 241, 0.25), 0 0 0 2px rgba(99, 102, 241, 0.2);
+            border-color: var(--accent);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent) 0%, var(--accent-light) 100%);
+            transition: width 0.3s ease;
+        }
+
+        .floating-chat {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .floating-chat:hover {
+            transform: scale(1.1);
+        }
+
+        .chat-window {
+            position: fixed;
+            bottom: 6rem;
+            right: 2rem;
+            width: 400px;
+            height: 500px;
+            background: var(--bg-secondary);
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            display: none;
+            flex-direction: column;
+            z-index: 999;
+        }
+
+        .chat-window.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -1000px 0;
+            }
+
+            100% {
+                background-position: 1000px 0;
+            }
+        }
+
+        .animate-slide-left {
+            animation: slideInLeft 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .animate-slide-right {
+            animation: slideInRight 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .animate-scale {
+            animation: scaleIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .animate-bounce {
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        .animate-pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .sidebar {
+            background-color: var(--card-bg);
+            transition: transform 0.3s ease;
+            border: 2px solid var(--border-color);
+            box-shadow: var(--shadow);
+        }
+
+        .dark-mode .sidebar {
+            background: linear-gradient(180deg, #1c2128 0%, #161b22 100%);
+            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.25);
+        }
+
+        .light-mode .sidebar {
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            box-shadow: 0 4px 24px rgba(99, 102, 241, 0.1);
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        @media (max-width: 768px) {
+            .chat-window {
+                width: calc(100% - 2rem);
+                right: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body class="light-mode">
+    <!-- Top Progress Bar -->
+    <div id="topProgress" class="fixed top-0 left-0 w-full h-1 bg-gray-200 z-50 hidden">
+        <div class="progress-fill" style="width: 0%"></div>
+    </div>
+
+    <!-- Floating Particles -->
+    <div id="particles"></div>
+
+    <!-- Header -->
+    <header class="relative overflow-hidden"
+        style="background: var(--gradient-1); box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);">
+        <div class="absolute inset-0 overflow-hidden">
+            <div class="absolute -top-1/2 -right-1/2 w-96 h-96 bg-white opacity-10 rounded-full blur-3xl"></div>
+            <div class="absolute -bottom-1/2 -left-1/2 w-96 h-96 bg-white opacity-10 rounded-full blur-3xl"></div>
+        </div>
+        <div class="container mx-auto px-4 py-8 relative z-10">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4 animate__animated animate__fadeInLeft">
+                    <div class="relative">
+                        <i class="fas fa-book-reader text-6xl text-white animate-bounce"></i>
+                        <div class="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full animate-ping"></div>
+                    </div>
+                    <div>
+                        <h1 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight">
+                            AI Book Summarizer
+                        </h1>
+                        <p class="text-lg text-white opacity-90 mt-1 flex items-center">
+                            <span class="inline-block w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
+                            Ultimate Edition 2025 - Powered by Gemini AI
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3 animate__animated animate__fadeInRight">
+                    <button onclick="showVoiceHelp()"
+                        class="p-4 rounded-2xl bg-white bg-opacity-20 hover:bg-opacity-30 transition-all duration-300 backdrop-blur-sm transform hover:scale-110"
+                        title="वॉइस कंट्रोल्स की जानकारी">
+                        <i class="fas fa-volume-up text-2xl text-white animate-pulse"></i>
+                    </button>
+                    <button id="themeToggle"
+                        class="p-4 rounded-2xl bg-white bg-opacity-20 hover:bg-opacity-30 transition-all duration-300 backdrop-blur-sm transform hover:scale-110">
+                        <i class="fas fa-moon text-2xl text-white"></i>
+                    </button>
+                    <button id="helpBtn"
+                        class="p-4 rounded-2xl bg-white bg-opacity-20 hover:bg-opacity-30 transition-all duration-300 backdrop-blur-sm transform hover:scale-110">
+                        <i class="fas fa-question-circle text-2xl text-white"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Wave decoration -->
+        <div class="absolute bottom-0 left-0 w-full">
+            <svg viewBox="0 0 1440 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0,50 C360,100 1080,0 1440,50 L1440,100 L0,100 Z" fill="var(--bg-primary)" opacity="0.5" />
+                <path d="M0,70 C360,20 1080,100 1440,70 L1440,100 L0,100 Z" fill="var(--bg-primary)" />
+            </svg>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex gap-6">
+            <!-- Sidebar -->
+            <aside id="sidebar" class="sidebar w-64 rounded-lg p-4 hidden lg:block">
+                <h3 class="text-lg font-bold mb-4 flex items-center">
+                    <i class="fas fa-list mr-2"></i>
+                    Chapters
+                </h3>
+                <div id="chapterList" class="space-y-2">
+                    <p class="text-sm opacity-60">Upload a book to see chapters</p>
+                </div>
+
+                <hr class="my-6 opacity-20">
+
+                <h3 class="text-lg font-bold mb-4 flex items-center">
+                    <i class="fas fa-history mr-2"></i>
+                    Recent Files
+                </h3>
+                <div id="recentFiles" class="space-y-2">
+                    <p class="text-sm opacity-60">No recent files</p>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="flex-1">
+                <!-- Upload Section -->
+                <section id="uploadSection" class="card mb-6 fade-in relative overflow-hidden">
+                    <!-- Animated background elements -->
+                    <div
+                        class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full opacity-10 blur-3xl animate-pulse">
+                    </div>
+                    <div class="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-blue-400 to-cyan-400 rounded-full opacity-10 blur-3xl animate-pulse"
+                        style="animation-delay: 1s;"></div>
+
+                    <div class="relative z-10">
+                        <h2
+                            class="text-3xl font-extrabold mb-6 flex items-center animate__animated animate__fadeInDown">
+                            <span class="relative">
+                                <i class="fas fa-cloud-upload-alt mr-3 text-transparent bg-clip-text animate-pulse"
+                                    style="background-image: var(--gradient-1);"></i>
+                            </span>
+                            <span class="text-transparent bg-clip-text" style="background-image: var(--gradient-1);">
+                                Upload Your Book
+                            </span>
+                        </h2>
+
+                        <div id="dropZone"
+                            class="relative border-4 border-dashed rounded-3xl p-16 text-center cursor-pointer transition-all duration-500 group drop-zone-enhanced"
+                            style="border-color: var(--accent); background: var(--hover-bg);">
+                            <!-- Animated gradient border on hover -->
+                            <div class="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                                style="background: var(--gradient-1); padding: 4px; -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude;">
+                            </div>
+
+                            <div class="relative z-10">
+                                <div class="mb-6 relative inline-block">
+                                    <i class="fas fa-file-upload text-8xl mb-4 text-transparent bg-clip-text animate-bounce"
+                                        style="background-image: var(--gradient-1);"></i>
+                                    <div
+                                        class="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full animate-ping">
+                                    </div>
+                                    <div
+                                        class="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full">
+                                    </div>
+                                </div>
+
+                                <p
+                                    class="text-2xl font-bold mb-3 group-hover:scale-110 transition-transform duration-300">
+                                    Drag & Drop your book here
+                                </p>
+                                <p class="text-lg opacity-70 mb-6">or click to browse</p>
+
+                                <input type="file" id="fileInput" accept=".pdf,.epub,.docx,.txt" class="hidden"
+                                    title="Upload book file">
+                                <button onclick="document.getElementById('fileInput').click()"
+                                    class="btn-primary transform hover:scale-105 transition-transform duration-300">
+                                    <i class="fas fa-folder-open mr-2"></i>
+                                    <span class="relative z-10">Browse Files</span>
+                                </button>
+
+                                <div class="mt-8 flex items-center justify-center space-x-6 text-sm file-types-list">
+                                    <div class="flex items-center space-x-2">
+                                        <i class="fas fa-file-pdf text-red-500 text-xl"></i>
+                                        <span class="font-semibold">PDF</span>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <i class="fas fa-file-alt text-blue-500 text-xl"></i>
+                                        <span class="font-semibold">ePub</span>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <i class="fas fa-file-word text-blue-600 text-xl"></i>
+                                        <span class="font-semibold">DOCX</span>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <i class="fas fa-file-lines text-gray-600 text-xl"></i>
+                                        <span>TXT</span>
+                                    </div>
+                                </div>
+                                <p class="text-xs opacity-50 mt-4">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    Maximum file size: 50MB
+                                </p>
+                            </div>
+                        </div>
+
+                        <div id="uploadProgress" class="mt-4 hidden">
+                            <div class="flex justify-between text-sm mb-2">
+                                <span id="uploadStatus">Uploading...</span>
+                                <span id="uploadPercent">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div id="uploadProgressBar" class="progress-fill" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div id="fileInfo" class="mt-6 hidden">
+                            <h3 class="text-xl font-bold mb-3">Book Information</h3>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div class="card">
+                                    <p class="text-sm opacity-60">Title</p>
+                                    <p id="bookTitle" class="font-semibold">-</p>
+                                </div>
+                                <div class="card">
+                                    <p class="text-sm opacity-60">Author</p>
+                                    <p id="bookAuthor" class="font-semibold">-</p>
+                                </div>
+                                <div class="card">
+                                    <p class="text-sm opacity-60">Chapters</p>
+                                    <p id="bookChapters" class="font-semibold">-</p>
+                                </div>
+                                <div class="card">
+                                    <p class="text-sm opacity-60">Words</p>
+                                    <p id="bookWords" class="font-semibold">-</p>
+                                </div>
+                            </div>
+                        </div>
+                </section>
+
+                <!-- Options Section -->
+                <section id="optionsSection" class="card mb-6 hidden">
+                    <h2 class="text-2xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-cog mr-2"></i>
+                        Summarization Options
+                    </h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Summary Style</label>
+                            <select id="summaryStyle"
+                                class="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
+                                <option value="concise">📝 Concise (Bullet Points)</option>
+                                <option value="detailed" selected>📄 Detailed (Comprehensive)</option>
+                                <option value="analytical">🧠 Analytical (Deep Insights)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Output Language</label>
+                            <select id="outputLanguage"
+                                class="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
+                                <option value="English" selected>English</option>
+                                <option value="Hindi">हिन्दी (Hindi)</option>
+                                <option value="Spanish">Español (Spanish)</option>
+                                <option value="French">Français (French)</option>
+                                <option value="German">Deutsch (German)</option>
+                                <option value="Chinese">中文 (Chinese)</option>
+                                <option value="Japanese">日本語 (Japanese)</option>
+                            </select>
+                        </div>
+
+                        <!-- Voice Settings -->
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">🔊 Voice Settings</label>
+                            <div class="space-y-2">
+                                <button onclick="showVoiceSettings()"
+                                    class="w-full p-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg font-semibold hover:from-green-600 hover:to-blue-600 transition-all duration-300">
+                                    <i class="fas fa-volume-up mr-2"></i>
+                                    वॉइस सेटिंग्स
+                                </button>
+                                <label class="flex items-center space-x-2 text-sm">
+                                    <input type="checkbox" id="autoReadToggle" onchange="toggleAutoRead()"
+                                        class="rounded">
+                                    <span>समरी के बाद अपने आप सुनाएं</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="summarizeBtn" class="btn-primary mt-6 w-full py-4 text-lg">
+                        <i class="fas fa-magic mr-2"></i>
+                        Generate AI Summary
+                    </button>
+                </section>
+
+                <!-- Summary Results -->
+                <section id="summarySection" class="hidden">
+                    <!-- Overall Summary -->
+                    <div class="card mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-2xl font-bold flex items-center">
+                                <i class="fas fa-book mr-2"></i>
+                                Overall Summary
+                            </h2>
+                            <div class="flex flex-wrap gap-2">
+                                <!-- Voice Controls -->
+                                <div class="flex space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1 mr-2">
+                                    <button id="playBtn" onclick="readSummary()"
+                                        class="btn-secondary text-sm px-3 py-2 bg-green-500 hover:bg-green-600 text-white"
+                                        title="सुनें (Listen)">
+                                        <i class="fas fa-play mr-1"></i> <span class="hidden sm:inline">सुनें</span>
+                                    </button>
+                                    <button id="pauseBtn" onclick="pauseReading()"
+                                        class="btn-secondary text-sm px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white hidden"
+                                        title="रोकें (Pause)">
+                                        <i class="fas fa-pause mr-1"></i> <span class="hidden sm:inline">रोकें</span>
+                                    </button>
+                                    <button id="stopBtn" onclick="stopReading()"
+                                        class="btn-secondary text-sm px-3 py-2 bg-red-500 hover:bg-red-600 text-white hidden"
+                                        title="बंद करें (Stop)">
+                                        <i class="fas fa-stop mr-1"></i> <span class="hidden sm:inline">बंद</span>
+                                    </button>
+                                </div>
+                                <!-- Export Buttons -->
+                                <div class="flex space-x-1">
+                                    <button onclick="exportSummary('pdf')" class="btn-primary text-sm py-2">
+                                        <i class="fas fa-file-pdf mr-1"></i> PDF
+                                    </button>
+                                    <button onclick="exportSummary('docx')" class="btn-primary text-sm py-2">
+                                        <i class="fas fa-file-word mr-1"></i> DOCX
+                                    </button>
+                                    <button onclick="exportSummary('txt')" class="btn-primary text-sm py-2">
+                                        <i class="fas fa-file-alt mr-1"></i> TXT
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="overallSummary" class="prose max-w-none"></div>
+                    </div>
+
+                    <!-- Themes & Analysis -->
+                    <div class="card mb-6">
+                        <h2 class="text-2xl font-bold mb-4 flex items-center">
+                            <i class="fas fa-palette mr-2"></i>
+                            Themes & Analysis
+                        </h2>
+                        <div id="themesContent" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                    </div>
+
+                    <!-- Keyword Cloud -->
+                    <div class="card mb-6">
+                        <h2 class="text-2xl font-bold mb-4 flex items-center">
+                            <i class="fas fa-cloud mr-2"></i>
+                            Keyword Cloud
+                        </h2>
+                        <canvas id="wordcloudCanvas" width="800" height="400"></canvas>
+                    </div>
+
+                    <!-- Chapter Summaries -->
+                    <div class="card mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-2xl font-bold flex items-center">
+                                <i class="fas fa-book-open mr-2"></i>
+                                Chapter Summaries
+                            </h2>
+                            <button onclick="readAllChapters()"
+                                class="btn-primary text-sm px-4 py-2 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600">
+                                <i class="fas fa-headphones mr-2"></i>
+                                सभी चैप्टर्स सुनें
+                            </button>
+                        </div>
+                        <div id="chapterSummaries" class="space-y-4"></div>
+                    </div>
+
+                    <!-- Study Tools -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <!-- Quiz Generator -->
+                        <div class="card">
+                            <h3 class="text-xl font-bold mb-3 flex items-center">
+                                <i class="fas fa-question-circle mr-2"></i>
+                                Generate Quiz
+                            </h3>
+                            <select id="quizChapter"
+                                class="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-800 mb-3"></select>
+                            <select id="quizDifficulty" class="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-800 mb-3">
+                                <option value="easy">Easy</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="hard">Hard</option>
+                            </select>
+                            <button onclick="generateQuiz()" class="btn-primary w-full">
+                                <i class="fas fa-brain mr-2"></i>
+                                Generate Quiz
+                            </button>
+                        </div>
+
+                        <!-- Quote Extractor -->
+                        <div class="card">
+                            <h3 class="text-xl font-bold mb-3 flex items-center">
+                                <i class="fas fa-quote-right mr-2"></i>
+                                Extract Quotes
+                            </h3>
+                            <input id="numQuotes" type="number" value="5" min="1" max="20"
+                                class="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-800 mb-3">
+                            <button onclick="extractQuotes()" class="btn-primary w-full">
+                                <i class="fas fa-sparkles mr-2"></i>
+                                Extract Quotes
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Quiz Modal -->
+                <div id="quizModal"
+                    class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+                    <div
+                        class="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-2xl font-bold">Quiz Results</h2>
+                            <button onclick="closeQuizModal()" class="text-2xl">&times;</button>
+                        </div>
+                        <div id="quizContent"></div>
+                        <button onclick="exportQuiz()" class="btn-primary mt-4">
+                            <i class="fas fa-download mr-2"></i>
+                            Export Quiz (CSV)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quotes Modal -->
+                <div id="quotesModal"
+                    class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+                    <div
+                        class="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-2xl font-bold">Memorable Quotes</h2>
+                            <button onclick="closeQuotesModal()" class="text-2xl">&times;</button>
+                        </div>
+                        <div id="quotesContent"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Floating Chat Button -->
+    <div id="floatingChat" class="floating-chat hidden">
+        <i class="fas fa-comments text-white text-2xl"></i>
+    </div>
+
+    <!-- Chat Window -->
+    <div id="chatWindow" class="chat-window">
+        <div
+            class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-t-lg flex justify-between items-center">
+            <h3 class="font-bold">Chat with Book</h3>
+            <button onclick="toggleChat()" class="text-xl">&times;</button>
+        </div>
+        <div id="chatMessages" class="flex-1 p-4 overflow-y-auto"></div>
+        <div class="p-4 border-t border-gray-300 dark:border-gray-700">
+            <div class="flex space-x-2">
+                <input id="chatInput" type="text" placeholder="Ask a question..."
+                    class="flex-1 p-2 rounded-lg bg-gray-100 dark:bg-gray-700"
+                    onkeypress="if(event.key==='Enter') sendChatMessage()">
+                <button onclick="sendChatMessage()" class="btn-primary">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="relative mt-16 overflow-hidden" style="background: var(--gradient-1);">
+        <!-- Animated background elements -->
+        <div class="absolute inset-0 overflow-hidden">
+            <div class="absolute -top-1/2 -right-1/4 w-96 h-96 bg-white opacity-10 rounded-full blur-3xl animate-pulse">
+            </div>
+            <div class="absolute -bottom-1/2 -left-1/4 w-96 h-96 bg-white opacity-10 rounded-full blur-3xl animate-pulse"
+                style="animation-delay: 1s;"></div>
+        </div>
+
+        <!-- Wave decoration at top -->
+        <div class="absolute top-0 left-0 w-full transform rotate-180">
+            <svg viewBox="0 0 1440 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0,50 C360,100 1080,0 1440,50 L1440,100 L0,100 Z" fill="var(--bg-primary)" opacity="0.5" />
+                <path d="M0,70 C360,20 1080,100 1440,70 L1440,100 L0,100 Z" fill="var(--bg-primary)" />
+            </svg>
+        </div>
+
+        <div class="container mx-auto px-4 py-12 relative z-10">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                <!-- About Section -->
+                <div class="text-white animate__animated animate__fadeInLeft">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-book-reader text-4xl mr-3 animate-bounce"></i>
+                        <h3 class="text-2xl font-bold">AI Book Summarizer</h3>
+                    </div>
+                    <p class="text-white opacity-90 leading-relaxed">
+                        Transform your reading experience with AI-powered summaries.
+                        Get instant insights, key themes, and comprehensive analysis of any book.
+                    </p>
+                    <div class="mt-4 flex items-center space-x-2">
+                        <span class="inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                        <span class="text-sm text-white opacity-80">Powered by Gemini AI</span>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="text-white animate__animated animate__fadeInUp">
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-link mr-2"></i>
+                        Quick Links
+                    </h3>
+                    <ul class="space-y-2">
+                        <li>
+                            <a href="#uploadSection"
+                                class="flex items-center hover:translate-x-2 transition-transform duration-300 opacity-90 hover:opacity-100">
+                                <i class="fas fa-chevron-right mr-2 text-sm"></i>
+                                Upload Book
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#optionsSection"
+                                class="flex items-center hover:translate-x-2 transition-transform duration-300 opacity-90 hover:opacity-100">
+                                <i class="fas fa-chevron-right mr-2 text-sm"></i>
+                                Summarization Options
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#summarySection"
+                                class="flex items-center hover:translate-x-2 transition-transform duration-300 opacity-90 hover:opacity-100">
+                                <i class="fas fa-chevron-right mr-2 text-sm"></i>
+                                View Summaries
+                            </a>
+                        </li>
+                        <li>
+                            <button onclick="showVoiceHelp()"
+                                class="flex items-center hover:translate-x-2 transition-transform duration-300 opacity-90 hover:opacity-100">
+                                <i class="fas fa-chevron-right mr-2 text-sm"></i>
+                                Voice Controls
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Connect Section -->
+                <div class="text-white animate__animated animate__fadeInRight">
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-user-circle mr-2"></i>
+                        Connect With Me
+                    </h3>
+                    <div class="space-y-3">
+                        <a href="https://github.com/Ankit2006Raj" target="_blank" rel="noopener noreferrer"
+                            class="flex items-center space-x-3 p-3 rounded-lg bg-white bg-opacity-10 hover:bg-opacity-20 transition-all duration-300 transform hover:scale-105 hover:translate-x-2">
+                            <i class="fab fa-github text-2xl"></i>
+                            <div>
+                                <div class="font-semibold">GitHub</div>
+                                <div class="text-xs opacity-80">@Ankit2006Raj</div>
+                            </div>
+                        </a>
+
+                        <a href="https://www.linkedin.com/in/ankit-raj-226a36309" target="_blank"
+                            rel="noopener noreferrer"
+                            class="flex items-center space-x-3 p-3 rounded-lg bg-white bg-opacity-10 hover:bg-opacity-20 transition-all duration-300 transform hover:scale-105 hover:translate-x-2">
+                            <i class="fab fa-linkedin text-2xl"></i>
+                            <div>
+                                <div class="font-semibold">LinkedIn</div>
+                                <div class="text-xs opacity-80">Ankit Raj</div>
+                            </div>
+                        </a>
+
+                        <a href="mailto:ankit9905163014@gmail.com"
+                            class="flex items-center space-x-3 p-3 rounded-lg bg-white bg-opacity-10 hover:bg-opacity-20 transition-all duration-300 transform hover:scale-105 hover:translate-x-2">
+                            <i class="fas fa-envelope text-2xl"></i>
+                            <div>
+                                <div class="font-semibold">Email</div>
+                                <div class="text-xs opacity-80">ankit9905163014@gmail.com</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Create floating particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 20;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+
+                const size = Math.random() * 60 + 20;
+                const left = Math.random() * 100;
+                const animationDuration = Math.random() * 10 + 10;
+                const delay = Math.random() * 5;
+
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.left = left + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDuration = animationDuration + 's';
+                particle.style.animationDelay = delay + 's';
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                if (isDarkMode) {
+                    particle.style.background = `linear-gradient(135deg, rgba(91, 124, 255, 0.${Math.floor(Math.random() * 3) + 3}) 0%, rgba(139, 92, 246, 0.${Math.floor(Math.random() * 3) + 3}) 100%)`;
+                } else {
+                    particle.style.background = `linear-gradient(135deg, rgba(79, 70, 229, 0.${Math.floor(Math.random() * 2) + 2}) 0%, rgba(124, 58, 237, 0.${Math.floor(Math.random() * 2) + 2}) 100%)`;
+                }
+
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // Initialize particles on load
+        document.addEventListener('DOMContentLoaded', function () {
+            createParticles();
+
+            // Add stagger animation to cards
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = (index * 0.1) + 's';
+                card.classList.add('animate__animated', 'animate__fadeInUp');
+            });
+        });
+    </script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/quiz.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/export.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/voice.js') }}"></script>
+</body>
+
+</html>
